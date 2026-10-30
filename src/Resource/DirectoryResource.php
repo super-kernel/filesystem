@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SuperKernel\Filesystem\Resource;
 
+use SuperKernel\Filesystem\Constants\DirectoryEntryType;
 use SuperKernel\Filesystem\Contract\ReadableResourceInterface;
-use SuperKernel\Filesystem\Enum\DirectoryEntryType;
 use SuperKernel\Filesystem\Exception\InvalidResourceConfigurationException;
 use SuperKernel\Filesystem\Exception\ResourceReadException;
 use SuperKernel\Filesystem\Model\DirectoryEntry;
@@ -46,41 +46,26 @@ final readonly class DirectoryResource implements ReadableResourceInterface
         }
 
         try {
+            $base = rtrim($this->path, '/\\');
+            $prefix = '' === $base ? DIRECTORY_SEPARATOR : $base . DIRECTORY_SEPARATOR;
+
             while (($name = readdir($handle)) !== false) {
                 if ('.' === $name || '..' === $name) {
                     continue;
                 }
 
-                $path = $this->entryPath($name);
+                $path = $prefix . $name;
+                $type = match (true) {
+                    is_link($path) => DirectoryEntryType::Link,
+                    is_dir($path)  => DirectoryEntryType::Directory,
+                    is_file($path) => DirectoryEntryType::File,
+                    default        => DirectoryEntryType::Other,
+                };
 
-                yield new DirectoryEntry($name, $path, self::entryType($path));
+                yield new DirectoryEntry($name, $path, $type);
             }
         } finally {
             closedir($handle);
         }
-    }
-
-    private function entryPath(string $name): string
-    {
-        $base = rtrim($this->path, '/\\');
-
-        return ('' === $base ? DIRECTORY_SEPARATOR : $base . DIRECTORY_SEPARATOR) . $name;
-    }
-
-    private static function entryType(string $path): DirectoryEntryType
-    {
-        if (is_link($path)) {
-            return DirectoryEntryType::Link;
-        }
-
-        if (is_dir($path)) {
-            return DirectoryEntryType::Directory;
-        }
-
-        if (is_file($path)) {
-            return DirectoryEntryType::File;
-        }
-
-        return DirectoryEntryType::Other;
     }
 }

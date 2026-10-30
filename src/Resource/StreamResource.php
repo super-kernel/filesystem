@@ -25,11 +25,18 @@ use function sprintf;
  */
 final readonly class StreamResource implements ReadableResourceInterface
 {
+    private int $chunkSize;
+    private string $description;
+
     /**
-     * @param Closure(): mixed $opener
+     * @param Closure(): mixed $opener Must return a newly opened PHP stream owned by this object
+     *
+     * @throws InvalidResourceConfigurationException When the chunk size or description is invalid
      */
-    private function __construct(private Closure $opener, private int     $chunkSize, private string  $description)
+    public function __construct(private Closure $opener, int $chunkSize, string $description)
     {
+        $this->chunkSize = ChunkSize::validate($chunkSize);
+        $this->description = ResourceLocation::validate($description, 'Stream description');
     }
 
     /**
@@ -42,7 +49,7 @@ final readonly class StreamResource implements ReadableResourceInterface
         return new self(
             /** @return resource|false */
             static fn() => @fopen($uri, 'rb'),
-            ChunkSize::validate($chunkSize),
+            $chunkSize,
             sprintf('stream "%s"', $uri),
         );
     }
@@ -58,11 +65,7 @@ final readonly class StreamResource implements ReadableResourceInterface
         string  $description = 'custom stream',
     ): self
     {
-        return new self(
-            $opener,
-            ChunkSize::validate($chunkSize),
-            ResourceLocation::validate($description, 'Stream description'),
-        );
+        return new self($opener, $chunkSize, $description);
     }
 
     public function read(): iterable
@@ -102,17 +105,11 @@ final readonly class StreamResource implements ReadableResourceInterface
                 yield $chunk;
             }
         } finally {
-            self::closeStream($stream);
-        }
-    }
-
-    /**
-     * Closes the stream unless it was already closed while iteration was suspended.
-     */
-    private static function closeStream(mixed $stream): void
-    {
-        if (is_resource($stream)) {
-            fclose($stream);
+            // Close the stream unless it was already closed while iteration was suspended.
+            /** @noinspection PhpConditionAlreadyCheckedInspection Callers may close $stream while suspended. */
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
         }
     }
 }

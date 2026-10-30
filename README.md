@@ -9,12 +9,12 @@ The package requires PHP 8.4.27 or later in the 8.4.x series and has no runtime 
 
 Paths below are relative to `src/` and the package namespace.
 
-| Directory | Responsibility |
-| --- | --- |
-| `Factory` | `LocalResourceFactory`: constructs readable resources. |
-| `Resource` | Directory, file, native-stream, and byte-string readers. |
-| `Validation` | `ChunkSize` and `ResourceLocation`: constructor invariants shared by readers. |
-| `Model / Enum / Contract` | Directory entry values, entry kinds, and resource contracts. |
+| Directory                      | Responsibility                                                                |
+|--------------------------------|-------------------------------------------------------------------------------|
+| `Factory`                      | `LocalResourceFactory`: constructs readable resources.                        |
+| `Resource`                     | Directory, file, native-stream, and byte-string readers.                      |
+| `Validation`                   | `ChunkSize` and `ResourceLocation`: constructor invariants shared by readers. |
+| `Model / Constants / Contract` | Directory entry values, entry kinds, and resource contracts.                  |
 
 Implementation helpers retain an `@internal` boundary; a responsibility namespace does not make them extension points.
 
@@ -22,8 +22,6 @@ Implementation helpers retain an `@internal` boundary; a responsibility namespac
 
 Use the following component declarations:
 
-- `Validation\ChunkSize`
-- `Validation\ResourceLocation`
 - `Factory\LocalResourceFactory`
 
 ## Reading resources
