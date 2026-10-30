@@ -22,8 +22,6 @@ Implementation helpers retain an `@internal` boundary; a responsibility namespac
 
 Use the following component declarations:
 
-- `Validation\ChunkSize`
-- `Validation\ResourceLocation`
 - `Factory\LocalResourceFactory`
 
 ## Reading resources
