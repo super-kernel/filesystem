@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SuperKernel\Filesystem\Enum;
+namespace SuperKernel\Filesystem\Constants;
 
 enum DirectoryEntryType: string
 {

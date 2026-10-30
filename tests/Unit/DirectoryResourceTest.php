@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SuperKernel\Filesystem\Tests\Unit;
 
-use SuperKernel\Filesystem\Enum\DirectoryEntryType;
+use SuperKernel\Filesystem\Constants\DirectoryEntryType;
 use SuperKernel\Filesystem\Exception\ResourceReadException;
 use SuperKernel\Filesystem\Model\DirectoryEntry;
 use SuperKernel\Filesystem\Resource\DirectoryResource;

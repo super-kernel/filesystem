@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SuperKernel\Filesystem\Model;
 
-use SuperKernel\Filesystem\Enum\DirectoryEntryType;
+use SuperKernel\Filesystem\Constants\DirectoryEntryType;
 
 final readonly class DirectoryEntry
 {
