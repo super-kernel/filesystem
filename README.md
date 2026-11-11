@@ -4,55 +4,94 @@
 
 # SuperKernel Filesystem
 
-`super-kernel/filesystem` provides lifecycle-safe, read-only resource abstractions. Consumers call one behavior, `read()`, and never receive or close the backing PHP handle. It has no runtime dependency other than PHP.
+`super-kernel/filesystem` reads files, directories, and streams through one method, `read()`, which opens and closes the PHP handle itself, so code that reads never holds or closes one.
 
-## Reading resources
+## Installation
 
-Use `LocalResourceFactory` when callers should depend only on factory and resource contracts:
+```bash
+composer require super-kernel/filesystem
+```
+
+The package has no requirement beyond PHP. Its classes are plain objects: they need no container and no build.
+
+## What it provides
+
+- File, stream, and in-memory resources that yield binary-safe chunks of a chosen size.
+- Directory resources that yield the immediate entries with their names, paths, and types.
+- A new read cycle for every `read()`, opened when iteration starts and closed when it ends, fails, or is abandoned.
+- Streams from a PHP URI or from a factory of your own.
+- `ResourceFactoryInterface`, so that code can depend on the contracts instead of the classes.
+
+It does not:
+
+- write, move, or delete files;
+- read asynchronously or provide Swoole-specific resources;
+- restrict, canonicalize, or expand paths, such as with glob patterns;
+- register a container service.
+
+## Quick start
+
+Read a file in chunks of eight bytes. Save the script as `bin/read-file.php`:
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 use SuperKernel\Filesystem\Factory\LocalResourceFactory;
 
-$resources = new LocalResourceFactory();
-$file = $resources->file('/srv/application/composer.json');
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$path = sys_get_temp_dir() . '/invoice-numbers.txt';
+file_put_contents($path, "INV-1001\nINV-1002\n");
+
+$file = new LocalResourceFactory()->file($path, chunkSize: 8);
 
 foreach ($file->read() as $chunk) {
-    // $chunk is a binary-safe PHP string.
+    echo '[', addcslashes($chunk, "\n"), ']', PHP_EOL;
 }
 ```
 
-Each `read()` call starts a new read cycle. File and stream handles are opened only when iteration starts and are closed after exhaustion, a read failure, or release of a partially consumed iterator.
+Run the script:
 
-Directory resources yield immediate typed entries. Dot entries are omitted and iteration retains the filesystem's native, unspecified order:
-
-```php
-$directory = $resources->directory('/srv/application/src');
-
-foreach ($directory->read() as $entry) {
-    printf("%s %s\n", $entry->type()->value, $entry->path());
-}
+```bash
+php bin/read-file.php
 ```
 
-Streams opened from a PHP URI follow the same contract:
+It prints:
 
-```php
-$stream = $resources->stream('php://stdin', chunkSize: 16_384);
-
-foreach ($stream->read() as $chunk) {
-    // Process one chunk without managing the stream handle.
-}
+```text
+[INV-1001]
+[\nINV-100]
+[2\n]
 ```
 
-`binaryStream()` and `BinaryStreamResource` expose in-memory binary data through the same chunked behavior. PHP strings are binary-safe, so neither file nor stream chunks imply an encoding or line boundary.
+## Public surface
 
-For a custom native stream source, use `streamFromFactory()` or `StreamResource::fromFactory()`. The factory must return a newly opened PHP stream on every call; the resource owns and closes it.
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `SuperKernel\Filesystem\Contract\ResourceFactoryInterface` | Interface | Creates directory, file, stream, factory-stream, and in-memory resources. |
+| `SuperKernel\Filesystem\Factory\LocalResourceFactory` | Class | The implementation of `ResourceFactoryInterface` for local files and PHP streams. |
+| `SuperKernel\Filesystem\Contract\ReadableResourceInterface` | Interface | `read()` starts a new read cycle and yields the resource's values. |
+| `SuperKernel\Filesystem\Resource\FileResource` | Class | Reads a regular file in chunks. |
+| `SuperKernel\Filesystem\Resource\DirectoryResource` | Class | Reads the immediate entries of a directory. |
+| `SuperKernel\Filesystem\Resource\StreamResource` | Class | Reads a stream opened from a URI with `fromUri()` or by a factory with `fromFactory()`. |
+| `SuperKernel\Filesystem\Resource\BinaryStreamResource` | Class | Reads a string held in memory in chunks. |
+| `SuperKernel\Filesystem\Model\DirectoryEntry` | Class | A directory entry: `name()`, `path()`, and `type()`. |
+| `SuperKernel\Filesystem\Constants\DirectoryEntryType` | Enum | The entry type: `directory`, `file`, `link`, or `other`. |
 
-## Errors
+## Behavior to know
 
-Every exception implements `Exception\FilesystemExceptionInterface`. An empty path, URI, or stream description, one containing a null byte, or a chunk size below one raises `InvalidResourceConfigurationException` when the resource is created. A source that cannot be opened or read, including a file path that is not a regular file, raises `ResourceReadException` during `read()`.
+- A chunk is a string of up to the chunk size, 8192 bytes by default; it implies no encoding or line boundary.
+- Directory entries come in the filesystem's own, unspecified order, without `.` and `..`.
+- Every exception implements `SuperKernel\Filesystem\Exception\FilesystemExceptionInterface`. An empty location or one with a null byte, or a chunk size below one, raises `InvalidResourceConfigurationException` when the resource is created, such as `Chunk size must be greater than zero.`
+- A source that cannot be opened or read, including a file path that is not a regular file, raises `ResourceReadException` during `read()`, such as `File "<path>" is not a regular file.`
+- A factory given to `streamFromFactory()` must return a newly opened stream on every call; the resource closes it after each read.
 
-## Contract boundaries
+## Documentation
 
-`ReadableResourceInterface<TValue>` is generic because a directory produces `DirectoryEntry` values while byte-oriented resources produce strings. The common behavior is lifecycle-safe reading, not a forced common payload representation.
+The developer documentation describes reading files, directories, streams, and memory, the lifetime of a read, and every error message, with complete examples: [SuperKernel Filesystem](https://github.com/super-kernel/.github/blob/main/docs/components/filesystem.md).
 
-The package is synchronous and read-only. It does not provide write operations, asynchronous or Swoole-specific implementations, path containment policy, canonical path resolution, or glob matching.
+## License
+
+Released under the MIT License. See [LICENSE](LICENSE).
