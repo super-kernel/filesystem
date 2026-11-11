@@ -78,7 +78,7 @@ It prints:
 | `SuperKernel\Filesystem\Resource\StreamResource` | Class | Reads a stream opened from a URI with `fromUri()` or by a factory with `fromFactory()`. |
 | `SuperKernel\Filesystem\Resource\BinaryStreamResource` | Class | Reads a string held in memory in chunks. |
 | `SuperKernel\Filesystem\Model\DirectoryEntry` | Class | A directory entry: `name()`, `path()`, and `type()`. |
-| `SuperKernel\Filesystem\Constants\DirectoryEntryType` | Class | The entry type enum: `directory`, `file`, `link`, or `other`. |
+| `SuperKernel\Filesystem\Constants\DirectoryEntryType` | Enum | The entry type: `directory`, `file`, `link`, or `other`. |
 
 ## Behavior to know
 

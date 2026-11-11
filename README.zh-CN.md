@@ -78,7 +78,7 @@ php bin/read-file.php
 | `SuperKernel\Filesystem\Resource\StreamResource` | 类 | 读取用 `fromUri()` 从 URI 打开、或用 `fromFactory()` 由工厂打开的流。 |
 | `SuperKernel\Filesystem\Resource\BinaryStreamResource` | 类 | 按块读取保存在内存中的字符串。 |
 | `SuperKernel\Filesystem\Model\DirectoryEntry` | 类 | 一个目录条目：`name()`、`path()` 和 `type()`。 |
-| `SuperKernel\Filesystem\Constants\DirectoryEntryType` | 类 | 条目类型枚举：`directory`、`file`、`link` 或 `other`。 |
+| `SuperKernel\Filesystem\Constants\DirectoryEntryType` | 枚举 | 条目类型：`directory`、`file`、`link` 或 `other`。 |
 
 ## 需要了解的行为
 
